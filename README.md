@@ -1,2 +1,2 @@
-# Capstone2023
-Deep Learning + Robot Movements
+# Capstone 2023
+
