@@ -55,7 +55,7 @@ testset = torchvision.datasets.ImageFolder(root=test_p, transform=transform_test
 validset = torchvision.datasets.ImageFolder(root=valid_p, transform=transform_test)
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True)
-test_loader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
+test_loader = torch.utils.data.DataLoader(testset, batch_size=33, shuffle=False)
 valid_loader = torch.utils.data.DataLoader(validset, batch_size=32, shuffle=False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
