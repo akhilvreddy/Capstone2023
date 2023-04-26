@@ -16,7 +16,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 img_W = 256
 img_H = 256
 input_shape = (3, img_W, img_H)
-num_classes = 3
+num_classes = 38
 
 print('==> Preparing data..')
 
@@ -26,7 +26,6 @@ transform_train = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
-
 
 transform_test = transforms.Compose([
     transforms.Resize((img_W, img_H)),
@@ -47,23 +46,23 @@ class ResNet(nn.Module):
 
 model = ResNet(num_classes)
 
-train_p = r'F:\Capstone_Reduced\train'
-test_p = r'F:\Capstone_Reduced\test'
-valid_p = r'F:\Capstone_Reduced\valid'
+train_p = r'insert directory'
+test_p = r'insert directory'
+valid_p = r'insert directory'
 
 trainset = torchvision.datasets.ImageFolder(root=train_p, transform=transform_train)
 testset = torchvision.datasets.ImageFolder(root=test_p, transform=transform_test)
 validset = torchvision.datasets.ImageFolder(root=valid_p, transform=transform_test)
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True)
-test_loader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
+test_loader = torch.utils.data.DataLoader(testset, batch_size=33, shuffle=False)
 valid_loader = torch.utils.data.DataLoader(validset, batch_size=32, shuffle=False)
 
-device = "cpu"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 opt = optim.SGD(model.parameters(), lr=0.0002)
 
-target_names = ['Apple scab', 'Apple Black rot', 'Apple Cedar rust']
+target_names = ['Apple scab', 'Apple Black rot', 'Apple Cedar rust', 'Apple healthy', 'Blueberry healthy', 'Cherry (including sour) Powdery mildew', 'Cherry (including sour) healthy', 'Corn (maize) Cercospora leaf spot Gray leaf spot', 'Corn (maize) Common rust', 'Corn (maize) Northern Leaf Blight', 'Corn (maize) healthy', 'Grape Black rot', 'Grape Esca (Black Measles)', 'Grape Leaf blight (Isariopsis Leaf Spot)', 'Grape healthy', 'Orange Haunglongbing (Citrus greening)', 'Peach Bacterial spot', 'Peach healthy', 'Bell pepper Bacterial spot', 'Bell pepper healthy', 'Potato Early blight', 'Potato Late blight', 'Potato healthy', 'Raspberry healthy', 'Soybean healthy', 'Squash Powdery mildew', 'Strawberry Leaf scorch', 'Strawberry healthy', 'Tomato Bacterial spot', 'Tomato Early blight', 'Tomato Late blight', 'Tomato Leaf Mold', 'Tomato Septoria leaf spot', 'Tomato Spider mites Two-spotted spider mite', 'Tomato Target Spot', 'Tomato Yellow Leaf Curl Virus', 'Tomato mosaic virus', 'Tomato healthy']
 
 def train(model, device, train_loader, optimizer, epoch):
     model.train()
@@ -90,7 +89,7 @@ def train(model, device, train_loader, optimizer, epoch):
 def validate(model, device, valid_loader):
     model.eval()
     valid_loss = 0
-    valid_acc = torchmetrics.Accuracy(num_classes=num_classes, task='multiclass')
+    valid_acc = torchmetrics.Accuracy(num_classes=num_classes, task='multiclass').to(device)
     with tqdm(total=len(train_loader)) as pbar2:
         with torch.no_grad():
             for data, target in valid_loader:
@@ -116,7 +115,7 @@ def test(model, device, test_loader, target_names):
             for data, target in test_loader:
                 data, target = data.to(device), target.to(device)
                 output = model(data)
-                test_loss += F.nll_loss(output, target, reduction='sum').item()
+                test_loss += F.CrossEntropyLoss()(output, target).item()
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
                 y_true.extend(target.tolist())
@@ -132,7 +131,7 @@ def test(model, device, test_loader, target_names):
     return test_loss, accuracy, report
 
 if __name__ == '__main__':
-    for epoch in range(1, 2):
+    for epoch in range(1, 11):
         train(model, device, train_loader, opt, epoch)
         validate(model, device, valid_loader)
         test(model, device, test_loader, target_names)
